@@ -33,5 +33,5 @@ cors:
 # 文件上传配置
 file:
   upload:
-    path: ./uploads/
+    path: D:/Osborn/校园二手交易平台/campus-trade-backend/uploads/
     max-size: 10MB
