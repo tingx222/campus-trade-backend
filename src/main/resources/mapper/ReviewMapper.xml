@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campus.trade.mapper.ReviewMapper">
+
+    <resultMap id="BaseResultMap" type="com.campus.trade.entity.Review">
+        <id column="id" property="id"/>
+        <result column="order_id" property="orderId"/>
+        <result column="goods_id" property="goodsId"/>
+        <result column="reviewer_id" property="reviewerId"/>
+        <result column="target_id" property="targetId"/>
+        <result column="rating" property="rating"/>
+        <result column="content" property="content"/>
+        <result column="type" property="type"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <resultMap id="WithUserResultMap" type="com.campus.trade.entity.Review" extends="BaseResultMap">
+        <result column="reviewer_nickname" property="reviewerNickname"/>
+        <result column="target_nickname" property="targetNickname"/>
+        <result column="goods_title" property="goodsTitle"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO review (order_id, goods_id, reviewer_id, target_id, rating, content, type)
+        VALUES (#{orderId}, #{goodsId}, #{reviewerId}, #{targetId}, #{rating}, #{content}, #{type})
+    </insert>
+
+    <select id="selectById" resultMap="WithUserResultMap">
+        SELECT r.*, u1.nickname as reviewer_nickname, u2.nickname as target_nickname, g.title as goods_title
+        FROM review r
+                 LEFT JOIN user u1 ON r.reviewer_id = u1.id
+                 LEFT JOIN user u2 ON r.target_id = u2.id
+                 LEFT JOIN goods g ON r.goods_id = g.id
+        WHERE r.id = #{id}
+    </select>
+
+    <select id="selectByOrderIdAndType" resultMap="BaseResultMap">
+        SELECT * FROM review WHERE order_id = #{orderId} AND type = #{type}
+    </select>
+
+    <select id="selectByGoodsId" resultMap="WithUserResultMap">
+        SELECT r.*, u1.nickname as reviewer_nickname, u2.nickname as target_nickname
+        FROM review r
+                 LEFT JOIN user u1 ON r.reviewer_id = u1.id
+                 LEFT JOIN user u2 ON r.target_id = u2.id
+        WHERE r.goods_id = #{goodsId}
+        ORDER BY r.create_time DESC
+    </select>
+
+    <select id="selectByTargetId" resultMap="WithUserResultMap">
+        SELECT r.*, u1.nickname as reviewer_nickname, g.title as goods_title
+        FROM review r
+                 LEFT JOIN user u1 ON r.reviewer_id = u1.id
+                 LEFT JOIN goods g ON r.goods_id = g.id
+        WHERE r.target_id = #{targetId}
+        ORDER BY r.create_time DESC
+    </select>
+
+    <select id="selectByReviewerId" resultMap="WithUserResultMap">
+        SELECT r.*, u2.nickname as target_nickname, g.title as goods_title
+        FROM review r
+                 LEFT JOIN user u2 ON r.target_id = u2.id
+                 LEFT JOIN goods g ON r.goods_id = g.id
+        WHERE r.reviewer_id = #{reviewerId}
+        ORDER BY r.create_time DESC
+    </select>
+
+    <select id="selectAverageRatingByTargetId" resultType="java.lang.Double">
+        SELECT AVG(rating) FROM review WHERE target_id = #{targetId}
+    </select>
+
+    <select id="selectReviewCountByTargetId" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM review WHERE target_id = #{targetId}
+    </select>
+
+</mapper>
