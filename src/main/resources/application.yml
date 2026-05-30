@@ -29,3 +29,9 @@ cors:
   allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
   allowed-headers: "*"
   allow-credentials: true
+
+# 文件上传配置
+file:
+  upload:
+    path: ./uploads/
+    max-size: 10MB
