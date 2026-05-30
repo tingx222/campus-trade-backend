@@ -4,6 +4,7 @@ import com.campus.trade.common.ResultVO;
 import com.campus.trade.entity.User;
 import com.campus.trade.service.UserService;
 import com.campus.trade.util.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -84,21 +85,30 @@ public class UserController {
      * 获取当前用户信息 GET /api/user/info
      */
     @GetMapping("/info")
-    public ResultVO<User> getUserInfo(@RequestHeader(value = "Authorization", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResultVO.fail(401, "未登录，请先登录");
+    public ResultVO getUserInfo(HttpServletRequest request) {
+        String token = request.getHeader("Authorization");
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResultVO.fail(401, "请先登录");
         }
-        try {
-            String tokenValue = token.startsWith("Bearer ") ? token.substring(7) : token;
-            Long userId = jwtUtil.getUserId(tokenValue);
-            User user = userService.getUserById(userId);
-            if (user == null) {
-                return ResultVO.fail("用户不存在");
-            }
-            user.setPassword(null); // 不返回密码
-            return ResultVO.success(user);
-        } catch (Exception e) {
-            return ResultVO.fail(401, "token无效或已过期");
+        token = token.substring(7);
+        if (!jwtUtil.validateToken(token)) {
+            return ResultVO.fail(401, "登录已过期");
         }
+        Long userId = jwtUtil.getUserId(token);
+        User user = userService.getUserById(userId);
+        if (user == null) {
+            return ResultVO.fail(404, "用户不存在");
+        }
+        // 打印调试
+        System.out.println("用户ID: " + userId + ", role: " + user.getRole());
+
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("id", user.getId());
+        userInfo.put("phone", user.getPhone());
+        userInfo.put("nickname", user.getNickname());
+        userInfo.put("creditScore", user.getCreditScore());
+        userInfo.put("role", user.getRole());
+        return ResultVO.success(userInfo);
     }
+
 }

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -100,7 +101,30 @@ public class DisputeServiceImpl implements DisputeService {
 
     @Override
     public List<Dispute> getMyDisputes(Long userId) {
-        return disputeMapper.findByApplicantId(userId);
+        // 查询作为申请人 或 作为被申请人的所有纠纷
+        List<Dispute> asApplicant = disputeMapper.findByApplicantId(userId);
+        List<Dispute> asRespondent = disputeMapper.findByRespondentId(userId);
+
+        // 合并两个列表并去重
+        List<Dispute> allDisputes = new ArrayList<>();
+        if (asApplicant != null) allDisputes.addAll(asApplicant);
+        if (asRespondent != null) {
+            for (Dispute d : asRespondent) {
+                boolean exists = false;
+                for (Dispute existing : allDisputes) {
+                    if (existing.getId().equals(d.getId())) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) allDisputes.add(d);
+            }
+        }
+
+        // 按创建时间倒序排序
+        allDisputes.sort((a, b) -> b.getCreateTime().compareTo(a.getCreateTime()));
+
+        return allDisputes;
     }
 
     @Override

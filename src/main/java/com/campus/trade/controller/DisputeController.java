@@ -2,9 +2,12 @@ package com.campus.trade.controller;
 
 import com.campus.trade.common.ResultVO;
 import com.campus.trade.entity.Dispute;
+import com.campus.trade.entity.User;
 import com.campus.trade.service.DisputeService;
+import com.campus.trade.service.UserService;
 import com.campus.trade.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,10 +15,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/dispute")
+@Slf4j
 public class DisputeController {
 
     @Autowired
     private DisputeService disputeService;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -47,6 +54,15 @@ public class DisputeController {
     public ResultVO resolveDispute(@RequestParam Long id, @RequestParam String result, HttpServletRequest request) {
         Long userId = getUserId(request);
         if (userId == null) return ResultVO.fail(401, "请先登录");
+
+        // 检查是否是管理员
+        User user = userService.getUserById(userId);
+        System.out.println("当前用户ID: " + userId + ", role: " + (user != null ? user.getRole() : "null"));
+
+        if (user == null || user.getRole() == null || user.getRole() != 2) {
+            return ResultVO.fail(403, "无权操作，需要管理员权限");
+        }
+
         try {
             Dispute d = disputeService.resolveDispute(id, result, userId);
             return ResultVO.success(d);

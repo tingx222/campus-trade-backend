@@ -32,6 +32,9 @@ public class User implements Serializable {
     /** 是否实名认证：0未认证 1已认证 */
     private Integer isAuth;
 
+    private Integer role;
+// getter setter
+
     /** 创建时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
